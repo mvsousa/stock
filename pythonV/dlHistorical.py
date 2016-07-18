@@ -6,12 +6,23 @@ import shutil
 import csv
 import select
 import socket 
-
 from urllib.request import urlretrieve
-nasdaq = 'http://www.nasdaq.com/screening/companies-by-name.aspx?letter=0&exchange=nasdaq&render=download'
-nyse = 'http://www.nasdaq.com/screening/companies-by-name.aspx?letter=0&exchange=nyse&render=download'
-amex = 'http://www.nasdaq.com/screening/companies-by-name.aspx?letter=0&exchange=amex&render=download'
-southam = 'http://www.nasdaq.com/screening/companies-by-region.aspx?region=South+America&render=download'
+
+def setup():
+    if not os.path.exists("../data"):
+        os.makedirs("../data")
+    files = os.listdir("../StockList/progress")
+    while True:
+        if not files:
+            break
+        if not os.path.exists("../StockList/progress/download.csv"):
+            oFile = "../StockList/progress/" + files.pop()
+            os.rename(oFile, "../StockList/progress/download.csv")
+            download()
+            files = os.listdir("../StockList/progress")
+        else: 
+            download()
+            files = os.listdir("../StockList/progress")
 
 def size(name):
     with open(name) as f:
@@ -40,48 +51,39 @@ def download():
                 path = stockPath + "/" + stockName + ".csv"
                 try:
                     urllib.request.urlretrieve(link, path)
+                except socket.gaierror as error:
+                    print ("Error")
                 except urllib.error.HTTPError as error:
-                    print ("Erro ao baixar essa Stock")
+                    print ("Error")
                 else:
-                    print ("File downloaded")
+                    print (" ")
             if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
                 line = input()
                 notDelete = False
+                sys.exit(0)
                 break
             i += 1
         if notDelete:
             os.remove("../StockList/progress/download.csv")
-#        This should remove lines            
-#        lines = open("../StockList/progress/download.csv").readlines()
-#        open("../StockList/progress/download.csv", 'w').writelines(lines[i:-1])
 
+nasdaq = 'http://www.nasdaq.com/screening/companies-by-name.aspx?letter=0&exchange=nasdaq&render=download'
+nyse = 'http://www.nasdaq.com/screening/companies-by-name.aspx?letter=0&exchange=nyse&render=download'
+amex = 'http://www.nasdaq.com/screening/companies-by-name.aspx?letter=0&exchange=amex&render=download'
+            
 markets = [nasdaq, nyse, amex]
 if not os.path.exists("../StockList"):
     os.makedirs("../StockList")
     os.makedirs("../StockList/progress")
 
-    for i in range (0, 3):
+    for i in range (0, 1):
         market =  (markets[i].split('=', -1)[2].split('&',-1)[0])
         path =  "../StockList/" + market + ".csv"
         urllib.request.urlretrieve(markets[i], path)
         subpath =  "../StockList/progress/" + market + ".csv"
         shutil.copy(path, subpath)
+    setup()
 else:
-    if not os.path.exists("../data"):
-        os.makedirs("../data")
-    files = os.listdir("../StockList/progress")
-    while True:
-        if not files:
-            break
-        if not os.path.exists("../StockList/progress/download.csv"):
-            oFile = "../StockList/progress/" + files.pop()
-            os.rename(oFile, "../StockList/progress/download.csv")
-            download()
-            files = os.listdir("../StockList/progress")
-        else: 
-            download()
-            files = os.listdir("../StockList/progress")
-
+    setup()
 
 
 
