@@ -8,6 +8,12 @@ import select
 import socket 
 from urllib.request import urlretrieve
 
+def line_prepender(filename, line):
+    with open(filename, 'r+') as f:
+        content = f.read()
+        f.seek(0, 0)
+        f.write(line.rstrip('\r\n') + '\n' + content)
+
 def setup():
     if not os.path.exists("../data"):
         os.makedirs("../data")
@@ -37,14 +43,19 @@ def download():
     with open("../StockList/progress/download.csv", 'r') as csvopen:
         csvdownload = csv.reader(csvopen, delimiter = ',')
         for row in csvdownload:
+            name = ''
+            summary = '"Symbol","Name","LastSale","MarketCap","IPOyear","Sector","industry","SummaryQuote",'
             stockParam = row
             stockName = str(row[0])
             stockPath = "../data/" + stockName
             os.system('cls' if os.name == 'nt' else 'clear')
-            print (stockName)
+           # print (stockName)
+            for a in range (15, 0, -2):
+                name = "\""+(str(row).split('\'',-1)[a]) + "\"" + ", " + name
             print ("Progress: " + str(i) + "/" + str(total) + " files downloaded")
             print ("Downloading " + stockName + " stock historical data")
             print ("Press enter to stop...")
+            path = ''
             if not os.path.exists(stockPath):
                 os.makedirs(stockPath)
                 link = 'http://' + 'ichart.finance.yahoo.com/table.csv?s=' + stockName
@@ -57,6 +68,11 @@ def download():
                     print ("Error")
                 else:
                     print (" ")
+            if os.path.exists(path):
+                line_prepender(path, '\n')
+                line_prepender(path, name)
+                line_prepender(path, summary)
+
             if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
                 line = input()
                 notDelete = False
